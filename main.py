@@ -35,22 +35,22 @@ for k, v in dms.items():
     msg_total = []
     timestamp = []
     msgs = open(path + k + "/messages.csv")
-    msgs = msgs.read().split(",\n")[:-1]
+    msgs = msgs.read().split(",\n")[1:]
     msgs.reverse()
     for i in msgs: # skip first line
         try:
             date = i.split(",")[1]
             timestamp.append(datetime.datetime.fromisoformat(date))
         except Exception:
-            print("hi")
             continue
         if len(msg_total) == 0:
             msg_total.append(1)
         else:
             msg_total.append(msg_total[-1] + 1)
-
-    plt.plot(timestamp, msg_total, "-")
+    if len(msgs) > 1000:
+        plt.plot(timestamp, msg_total, "-", label=v)
 
 plt.ylabel("Messages")
-plt.ylabel("Date")
+plt.xlabel("Date")
+plt.legend(loc="upper left")
 plt.show()
