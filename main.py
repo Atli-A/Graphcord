@@ -50,7 +50,8 @@ for k, v in dms.items():
     if len(msgs) > 1000:
         plt.plot(timestamp, msg_total, "-", label=v)
 
+plt.legend( loc="upper left")
+
 plt.ylabel("Messages")
 plt.xlabel("Date")
-plt.legend(loc="upper left")
 plt.show()
