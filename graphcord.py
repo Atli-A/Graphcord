@@ -7,22 +7,29 @@ import datetime
 import os
 import json
 
+def err(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+
 if len(sys.argv) != 2:
-    print("Expects one argument: the path to the discord data downloaded(unzipped)")
+    err("Expects one argument: the path to the discord data downloaded(unzipped)")
     sys.exit(1)
 
 path = sys.argv[1]
 
-subdirs = os.listdir(path)
-assert("messages" in subdirs)
+if not os.path.isdir(path):
+    err("No directory %s" % path)
+    sys.exit(1)
 
-path += "/messages/"
-#print(os.listdir(path))
+if "messages" not in os.listdir(path):
+    err("No \"messages\" directory found in %s" % path)
+    sys.exit(1)
+
+path = os.path.join(path, "messages/")
 
 try:
     names = json.loads(open(path + "index.json").read())
 except Exception:
-    print("could not find %s" % path + "index.json")
+    err("could not find %s" % path + "index.json")
     sys.exit(1)
 
 # generate list of dms
