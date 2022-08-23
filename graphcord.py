@@ -7,6 +7,10 @@ import datetime
 import os
 import json
 
+if len(sys.argv) != 2:
+    print("Expects one argument: the path to the discord data downloaded(unzipped)")
+    sys.exit(1)
+
 path = sys.argv[1]
 
 subdirs = os.listdir(path)
