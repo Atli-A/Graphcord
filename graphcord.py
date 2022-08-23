@@ -36,6 +36,7 @@ def read(path):
 
     print("Reading DMs")
     # for each dm read and plot
+    leaders = {}
     for k, v in dms.items():
         msg_total = []
         timestamp = []
@@ -52,8 +53,15 @@ def read(path):
                 msg_total.append(1)
             else:
                 msg_total.append(msg_total[-1] + 1)
-        if len(msgs) > 1000:
-            plt.plot(timestamp, msg_total, "-", label=v)
+        leaders[v] = (timestamp, msg_total)
+
+    leaders = dict(sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True))
+    i = 0
+    for n, d in leaders.items():
+        i += 1
+        if i > 10:
+            break
+        plt.plot(d[0], d[1], "-", label=n)
 
     print("Plotting")
     plt.legend( loc="upper left")
