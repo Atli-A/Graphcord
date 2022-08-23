@@ -50,4 +50,7 @@ for k, v in dms.items():
             msg_total.append(msg_total[-1] + 1)
 
     plt.plot(timestamp, msg_total, "-")
+
+plt.ylabel("Messages")
+plt.ylabel("Date")
 plt.show()
