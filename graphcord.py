@@ -20,9 +20,9 @@ def read(path):
     path = os.path.join(path, "messages/")
 
     try:
-        names = json.loads(open(path + "index.json").read())
+        names = json.loads(open(os.path.join(path, "index.json")).read())
     except Exception:
-        err("Could not find %s" % path + "index.json")
+        err("Could not find %s" % os.path.join(path, "index.json"))
         sys.exit(1)
 
     # generate list of dms
@@ -30,8 +30,8 @@ def read(path):
     print("Collecting Names")
     dms = {}
     for i in os.listdir(path):
-        if os.path.isdir(path + i): 
-            if json.loads(open(path + i + "/channel.json").read())["type"] == 1:
+        if os.path.isdir(os.path.join(path, i)): 
+            if json.loads(open(os.path.join(path, i, "channel.json")).read())["type"] == 1:
                 dms[i] = names[i[1:]]
 
     print("Reading DMs")
@@ -40,7 +40,7 @@ def read(path):
     for k, v in dms.items():
         msg_total = []
         timestamp = []
-        msgs = open(path + k + "/messages.csv")
+        msgs = open(os.path.join(path, k, "messages.csv"))
         msgs = msgs.read().split(",\n")[1:]
         msgs.reverse()
         for i in msgs: # skip first line
