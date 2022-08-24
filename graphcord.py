@@ -53,7 +53,13 @@ def read(path):
                 msg_total.append(1)
             else:
                 msg_total.append(msg_total[-1] + 1)
-        leaders[v] = (timestamp, msg_total)
+        if len(msg_total) != 0:
+            leaders[v] = (timestamp, msg_total)
+    max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
+
+    for k, v in leaders.items():
+        v[0].append(max_timestamp)
+        v[1].append(v[1][-1])
 
     leaders = dict(sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True))
     i = 0
