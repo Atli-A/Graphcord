@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import sys
 import datetime
 import os
 import json
 import tempfile
 import zipfile
+import argparse
+
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
-def read(path):
+def read(path, numlines):
     if "messages" not in os.listdir(path):
         err("No \"messages\" directory found in file")
 
@@ -64,7 +66,7 @@ def read(path):
     i = 0
     for n, d in leaders.items():
         i += 1
-        if i > 10:
+        if i > numlines:
             break
         plt.plot(d[0], d[1], "-", label=n)
 
@@ -75,11 +77,13 @@ def read(path):
     plt.xlabel("Date")
     plt.show()
 
-if len(sys.argv) != 2:
-    err("Expects one argument: the path to the discord data download")
+parser = argparse.ArgumentParser(description="Graph discord messages over time")
+parser.add_argument("path", metavar="path", type=str, nargs=None, help="The top n users to graph")
+parser.add_argument("-n", metavar="numlines", type=int, nargs=1, default=10, help="The top n users to graph")
+args = parser.parse_args()
 
-path = sys.argv[1]
-
+path = args.path
+print(args)
 if not os.path.isfile(path):
     err("No file %s" % path)
 
@@ -88,4 +92,4 @@ zf = zipfile.ZipFile(path, "r")
 with tempfile.TemporaryDirectory() as tf:
     print("Extracting")
     zf.extractall(tf)
-    read(tf)
+    read(tf, args.n[0])
