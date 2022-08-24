@@ -33,7 +33,9 @@ def read(path, numlines):
     for i in os.listdir(path):
         if os.path.isdir(os.path.join(path, i)): 
             if json.loads(open(os.path.join(path, i, "channel.json")).read())["type"] == 1:
-                dms[i] = names[i[1:]]
+                name = names[i[1:]] 
+                startstr = "Direct Message with"
+                dms[i] = name[len(startstr):] if name.startswith(startstr) else name
 
     print("Reading DMs")
     # for each dm read and plot
@@ -72,9 +74,11 @@ def read(path, numlines):
 
     print("Plotting")
     plt.legend( loc="upper left")
-
+    plt.title("Top 15 most messaged users over time")
     plt.ylabel("Messages")
     plt.xlabel("Date")
+    plt.xticks(rotation=75)
+    plt.tight_layout()
     plt.show()
 
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
@@ -83,7 +87,6 @@ parser.add_argument("-n", metavar="numlines", type=int, nargs=1, default=10, hel
 args = parser.parse_args()
 
 path = args.path
-print(args)
 if not os.path.isfile(path):
     err("No file %s" % path)
 
