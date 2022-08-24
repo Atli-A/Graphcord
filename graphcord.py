@@ -11,11 +11,11 @@ import zipfile
 
 def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+    sys.exit(1)
 
 def read(path):
     if "messages" not in os.listdir(path):
         err("No \"messages\" directory found in file")
-        sys.exit(1)
 
     path = os.path.join(path, "messages/")
 
@@ -23,7 +23,6 @@ def read(path):
         names = json.loads(open(os.path.join(path, "index.json")).read())
     except Exception:
         err("Could not find %s" % os.path.join(path, "index.json"))
-        sys.exit(1)
 
     # generate list of dms
     #     channel id : name
@@ -76,18 +75,13 @@ def read(path):
     plt.xlabel("Date")
     plt.show()
 
-
-
-
 if len(sys.argv) != 2:
     err("Expects one argument: the path to the discord data download")
-    sys.exit(1)
 
 path = sys.argv[1]
 
 if not os.path.isfile(path):
     err("No file %s" % path)
-    sys.exit(1)
 
 zf = zipfile.ZipFile(path, "r")
 
@@ -95,5 +89,3 @@ with tempfile.TemporaryDirectory() as tf:
     print("Extracting")
     zf.extractall(tf)
     read(tf)
-
-
