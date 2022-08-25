@@ -83,7 +83,7 @@ def read(path, numlines):
 
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
 parser.add_argument("path", metavar="path", type=str, nargs=None, help="The top n users to graph")
-parser.add_argument("-n", metavar="numlines", type=int, nargs=1, default=10, help="The top n users to graph")
+parser.add_argument("-n", metavar="numlines", type=int, nargs=1, default=[10], help="The top n users to graph")
 args = parser.parse_args()
 
 path = args.path
