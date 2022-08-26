@@ -22,9 +22,8 @@ def read(path, numlines, start_after):
     path = os.path.join(path, "messages/")
 
     try:
-        f = open(os.path.join(path, "index.json"))
-        names = json.load(f)
-        f.close()
+        with open(os.path.join(path, "index.json")) as f:
+            names = json.load(f)
     except Exception:
         err("Could not find %s" % os.path.join(path, "index.json"))
 
@@ -34,10 +33,11 @@ def read(path, numlines, start_after):
     dms = {}
     for i in os.listdir(path):
         if os.path.isdir(os.path.join(path, i)):
-            if json.loads(open(os.path.join(path, i, "channel.json")).read())["type"] == 1:
-                name = names[i[1:]]
-                startstr = "Direct Message with"
-                dms[i] = name[len(startstr):] if name.startswith(startstr) else name
+            with open(os.path.join(path, i, "channel.json")) as file:
+                if json.load(file)["type"] == 1:
+                    name = names[i[1:]]
+                    startstr = "Direct Message with"
+                    dms[i] = name[len(startstr):] if name.startswith(startstr) else name
 
     print("Reading DMs")
     # for each dm read and plot
@@ -45,21 +45,22 @@ def read(path, numlines, start_after):
     for k, v in dms.items():
         msg_total = []
         timestamp = []
-        msgs = open(os.path.join(path, k, "messages.csv"))
-        msgs = msgs.read().split(",\n")[1:]
-        msgs.reverse()
-        for i in msgs: # skip first line
-            try:
-                date = i.split(",")[1]
-                timestamp.append(datetime.datetime.fromisoformat(date))
-            except Exception:
-                continue
-            if len(msg_total) == 0:
-                msg_total.append(1)
-            else:
-                msg_total.append(msg_total[-1] + 1)
-        if len(msg_total) != 0:
-            leaders[v] = (timestamp, msg_total)
+        with open(os.path.join(path, k, "messages.csv")) as f:
+            msgs = f.read().split(",\n")[1:]
+            msgs.reverse()
+            for i in msgs: # skip first line
+                try:
+                    date = i.split(",")[1]
+                    timestamp.append(datetime.datetime.fromisoformat(date))
+                except Exception:
+                    continue
+                if len(msg_total) == 0:
+                    msg_total.append(1)
+                else:
+                    msg_total.append(msg_total[-1] + 1)
+            if len(msg_total) != 0:
+                leaders[v] = (timestamp, msg_total)
+
     max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
 
     for k, v in leaders.items():
