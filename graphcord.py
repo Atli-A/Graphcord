@@ -74,7 +74,7 @@ def read(path, numlines):
 
     print("Plotting")
     plt.legend( loc="upper left")
-    plt.title("Top 15 most messaged users over time")
+    plt.title("Top %d most messaged users over time" % numlines)
     plt.ylabel("Messages")
     plt.xlabel("Date")
     plt.xticks(rotation=75)
