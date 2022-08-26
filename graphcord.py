@@ -22,7 +22,9 @@ def read(path, numlines):
     path = os.path.join(path, "messages/")
 
     try:
-        names = json.loads(open(os.path.join(path, "index.json")).read())
+        f =open(os.path.join(path, "index.json")
+        names = json.load(f)
+        f.close()
     except Exception:
         err("Could not find %s" % os.path.join(path, "index.json"))
 
