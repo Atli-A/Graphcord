@@ -15,14 +15,14 @@ def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
-def read(path, numlines):
+def read(path, numlines, start_after):
     if "messages" not in os.listdir(path):
         err("No \"messages\" directory found in file")
 
     path = os.path.join(path, "messages/")
 
     try:
-        f =open(os.path.join(path, "index.json")
+        f = open(os.path.join(path, "index.json"))
         names = json.load(f)
         f.close()
     except Exception:
@@ -33,9 +33,9 @@ def read(path, numlines):
     print("Collecting Names")
     dms = {}
     for i in os.listdir(path):
-        if os.path.isdir(os.path.join(path, i)): 
+        if os.path.isdir(os.path.join(path, i)):
             if json.loads(open(os.path.join(path, i, "channel.json")).read())["type"] == 1:
-                name = names[i[1:]] 
+                name = names[i[1:]]
                 startstr = "Direct Message with"
                 dms[i] = name[len(startstr):] if name.startswith(startstr) else name
 
@@ -67,12 +67,15 @@ def read(path, numlines):
         v[1].append(v[1][-1])
 
     leaders = dict(sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True))
-    i = 0
-    for n, d in leaders.items():
-        i += 1
-        if i > numlines:
-            break
-        plt.plot(d[0], d[1], "-", label=n)
+
+    if start_after > len(leaders):
+        print(f"Can't start after {start_after} users, you only have {len(leaders)}, starting at 0", file=sys.stderr)
+        start_after = 0
+
+    leaders_to_display = list(leaders.items())[start_after:start_after + numlines]
+
+    for name, data in leaders_to_display:
+        plt.plot(data[0], data[1], "-", label=name)
 
     print("Plotting")
     plt.legend( loc="upper left")
@@ -83,9 +86,16 @@ def read(path, numlines):
     plt.tight_layout()
     plt.show()
 
+def uint(value):
+    ivalue = int(value)
+    if ivalue <= 0:
+        raise argparse.ArgumentTypeError("%s is an invalid, need a positive int value" % value)
+    return ivalue
+
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
 parser.add_argument("path", metavar="path", type=str, nargs=None, help="The top n users to graph")
-parser.add_argument("-n", metavar="numlines", type=int, nargs=1, default=[10], help="The top n users to graph")
+parser.add_argument("-n", metavar="numlines", type=uint, nargs=1, default=[10], help="The top n users to graph")
+parser.add_argument("-s", "--start", metavar="start", type=uint, nargs=1, default=[0], help="Skip the first `start` top users")
 args = parser.parse_args()
 
 path = args.path
@@ -97,4 +107,4 @@ zf = zipfile.ZipFile(path, "r")
 with tempfile.TemporaryDirectory() as tf:
     print("Extracting")
     zf.extractall(tf)
-    read(tf, args.n[0])
+    read(tf, args.n[0], args.start[0])
