@@ -22,7 +22,7 @@ def read(path, numlines, start_after):
     path = os.path.join(path, "messages/")
 
     try:
-        f =open(os.path.join(path, "index.json")
+        f = open(os.path.join(path, "index.json"))
         names = json.load(f)
         f.close()
     except Exception:
@@ -33,9 +33,9 @@ def read(path, numlines, start_after):
     print("Collecting Names")
     dms = {}
     for i in os.listdir(path):
-        if os.path.isdir(os.path.join(path, i)): 
+        if os.path.isdir(os.path.join(path, i)):
             if json.loads(open(os.path.join(path, i, "channel.json")).read())["type"] == 1:
-                name = names[i[1:]] 
+                name = names[i[1:]]
                 startstr = "Direct Message with"
                 dms[i] = name[len(startstr):] if name.startswith(startstr) else name
 
@@ -95,7 +95,7 @@ def uint(value):
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
 parser.add_argument("path", metavar="path", type=str, nargs=None, help="The top n users to graph")
 parser.add_argument("-n", metavar="numlines", type=uint, nargs=1, default=[10], help="The top n users to graph")
-parser.add_argument("--start", metavar="start", type=uint, nargs=1, default=[0], help="Skip the first `start` top users")
+parser.add_argument("-s", "--start", metavar="start", type=uint, nargs=1, default=[0], help="Skip the first `start` top users")
 args = parser.parse_args()
 
 path = args.path
