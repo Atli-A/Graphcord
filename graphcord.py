@@ -4,6 +4,7 @@ import sys
 import datetime
 import os
 import json
+import csv
 import tempfile
 import zipfile
 import argparse
@@ -46,21 +47,18 @@ def read(path, numlines, start_after):
         msg_total = []
         timestamp = []
         with open(os.path.join(path, k, "messages.csv")) as f:
-            msgs = f.read().split(",\n")[1:]
-            msgs.reverse()
-            for i in msgs: # skip first line
-                try:
-                    date = i.split(",")[1]
-                    timestamp.append(datetime.datetime.fromisoformat(date))
-                except Exception:
-                    continue
+            msgs = csv.reader(f)
+            next(msgs) # skip the header
+            msgs = reversed(list(msgs))
+            for line in msgs:
+                date = line[1]
+                timestamp.append(datetime.datetime.fromisoformat(date))
                 if len(msg_total) == 0:
                     msg_total.append(1)
                 else:
                     msg_total.append(msg_total[-1] + 1)
             if len(msg_total) != 0:
                 leaders[v] = (timestamp, msg_total)
-
     max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
 
     for k, v in leaders.items():
