@@ -23,7 +23,7 @@ def read(path, numlines, start_after):
     path = os.path.join(path, "messages/")
 
     try:
-        with open(os.path.join(path, "index.json")) as f:
+        with open(os.path.join(path, "index.json"), encoding="utf-8") as f:
             names = json.load(f)
     except Exception:
         err("Could not find %s" % os.path.join(path, "index.json"))
@@ -34,7 +34,7 @@ def read(path, numlines, start_after):
     dms = {}
     for i in os.listdir(path):
         if os.path.isdir(os.path.join(path, i)):
-            with open(os.path.join(path, i, "channel.json")) as file:
+            with open(os.path.join(path, i, "channel.json"), encoding="utf-8") as file:
                 if json.load(file)["type"] == 1:
                     name = names[i[1:]]
                     startstr = "Direct Message with"
@@ -46,7 +46,7 @@ def read(path, numlines, start_after):
     for k, v in dms.items():
         msg_total = []
         timestamp = []
-        with open(os.path.join(path, k, "messages.csv")) as f:
+        with open(os.path.join(path, k, "messages.csv"), encoding="utf-8") as f:
             msgs = csv.reader(f)
             next(msgs) # skip the header
             msgs = reversed(list(msgs))
