@@ -32,7 +32,7 @@ r"""
 )$
 """, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
 
-def find_mmms(string, hmms_dict):
+def find_hmms(pattern, string, hmms_dict):
     results = pattern.finditer(string)
     for found in results:
         hmm_found = None
@@ -70,22 +70,23 @@ def get_dms(path):
                     startstr = "Direct Message with "
                     dms[i] = name[len(startstr):] if name.startswith(startstr) else name
     return dms
+
 def read(path, args):
     path = os.path.join(path, "messages/")
-    print(args)
+    print("Finding DMs")
     dms = get_dms(path)
+    print(dms)
     print("Reading DMs")
     # for each dm read and plot
     leaders = {}
-    for k, v in dms.items():
+    for directory, username in dms.items():
         msg_total = [1]
         timestamp = []
         hmms = []
-        with open(os.path.join(path, k, "messages.csv"), encoding="utf-8") as f:
+        with open(os.path.join(path, directory, "messages.csv"), encoding="utf-8") as f:
             msgs = csv.reader(f)
             next(msgs) # skip the header
             msgs = reversed(list(msgs))
-
             hmms_dict = {}
 
             for line in msgs:
@@ -93,13 +94,14 @@ def read(path, args):
                 timestamp.append(datetime.datetime.fromisoformat(date))
                 msg_total.append(msg_total[-1] + 1)
 
-                content = line[2]
-                find_mmms(content, hmms_dict)
+                msg_content = line[2]
+                find_hmms(pattern, msg_content, hmms_dict)
                 hmms.append(hmms_dict.copy())
-            
             msg_total = msg_total[1:]
+            
             if len(msg_total) != 0:
-                leaders[v] = [timestamp, msg_total, hmms]
+                leaders[username] = [timestamp, msg_total, hmms]
+
     if args.list:
         total_total = 0
         for name, v in leaders.items():
@@ -131,7 +133,7 @@ def read(path, args):
     leaders = sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True)
 
     if args.user:
-        selected_users = list(filter(lambda item: args.user in item[0].lower(), leaders))
+        selected_users = list(filter(lambda item: any_in([i.lower() for i in args.user], item[0].lower()), leaders))
         if selected_users:
             leaders = selected_users
         else:
@@ -141,14 +143,15 @@ def read(path, args):
     if start_after > len(leaders):
         print(f"Can't start after {start_after} users, you only have {len(leaders)}, starting at 0", file=sys.stderr)
         start_after = 0
-    leaders_to_display = leaders[start_after:(start_after + args.numlines)]
 
-    names = [user[0] for user in leaders_to_display]
+    users_to_display = leaders[start_after:(start_after + args.numlines)]
+
+    names = [user[0] for user in users_to_display]
     print(f"Showing data for user(s): {', '.join(names)}")
 
-    for name, data in leaders_to_display:
+    for name, data in users_to_display:
         if args.hmm:
-            if len(leaders_to_display) > 1:
+            if len(users_to_display) > 1:
                 err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
             for name, values in data[2]:
                 plt.plot(data[0], values, "-", label=name)
@@ -172,15 +175,23 @@ def uint(value):
         raise argparse.ArgumentTypeError("%s is an invalid, need a positive int value" % value)
     return ivalue
 
+def any_in(lst1, lst2):
+    for i in lst1:
+        if i in lst2:
+            return True
+    return False
+
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
 parser.add_argument("path", metavar="FILE", type=str, nargs=None, help="The top n users to graph")
 parser.add_argument("-n", dest="numlines", metavar="numlines", type=uint, default=10, help="The top n users to graph")
 parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", type=uint, default=0, help="Skip the first `start` top users")
 parser.add_argument("-l", "--list" , dest="list", action="store_true", help="List all DMs and exit")
-parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, default=None, help="Show only the given `user`")
+parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, nargs="+", default=None, help="Show only the given `user`")
 parser.add_argument("--hmms" , dest="hmm", action="store_true", help="Show statistics for words like hmm, huh, or lol")
 parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, help="Graph words")
+
 args = parser.parse_args()
+
 
 path = args.path
 if not os.path.isfile(path):
