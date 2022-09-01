@@ -13,7 +13,7 @@ import argparse
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
-pattern = re.compile(
+hmms_pattern = re.compile(
 r"""
 ^(
 (?P<L>L)|
@@ -25,7 +25,7 @@ r"""
 (?P<mhm>(m+)h(m+))|
 (?P<hmm>h(m+))|
 (?P<lol>l(o+)l)|
-(?P<lmao>lm(f?)a(o+))|
+(?P<lmao>lm(f?)(a+)(o+))|
 (?P<yes>ye(s*))|
 (?P<no>n(o+))|
 (?P<oh>(o+)(h*))
@@ -71,14 +71,23 @@ def get_dms(path):
                     dms[i] = name[len(startstr):] if name.startswith(startstr) else name
     return dms
 
+def compile_words(words):
+    buf = ""
+    for i in words:
+        buf += "(?P<%s>%s)|" % (i, i)
+    buf = buf[:-1] 
+    print(buf)
+    return re.compile(buf, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
+
 def read(path, args):
     path = os.path.join(path, "messages/")
     print("Finding DMs")
     dms = get_dms(path)
-    print(dms)
     print("Reading DMs")
     # for each dm read and plot
     leaders = {}
+    pattern = hmms_pattern if args.words is None else compile_words(args.words)
+        
     for directory, username in dms.items():
         msg_total = [1]
         timestamp = []
@@ -150,7 +159,7 @@ def read(path, args):
     print(f"Showing data for user(s): {', '.join(names)}")
 
     for name, data in users_to_display:
-        if args.hmm:
+        if args.hmms or args.words != None:
             if len(users_to_display) > 1:
                 err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
             for name, values in data[2]:
@@ -187,11 +196,12 @@ parser.add_argument("-n", dest="numlines", metavar="numlines", type=uint, defaul
 parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", type=uint, default=0, help="Skip the first `start` top users")
 parser.add_argument("-l", "--list" , dest="list", action="store_true", help="List all DMs and exit")
 parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, nargs="+", default=None, help="Show only the given `user`")
-parser.add_argument("--hmms" , dest="hmm", action="store_true", help="Show statistics for words like hmm, huh, or lol")
+parser.add_argument("--hmms" , dest="hmms", action="store_true", help="Show statistics for words like hmm, huh, or lol")
 parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, help="Graph words")
 
 args = parser.parse_args()
-
+if args.hmms and args.words:
+    raise argparse.ArgumentTypeError("-w/--words cannot be used with --hmms")
 
 path = args.path
 if not os.path.isfile(path):
