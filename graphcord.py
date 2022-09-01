@@ -33,7 +33,6 @@ r"""
 """, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
 
 def find_mmms(string, hmms_dict):
-
     results = pattern.finditer(string)
     for found in results:
         hmm_found = None
@@ -52,12 +51,7 @@ def err(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
     sys.exit(1)
 
-def read(path, args):
-    if "messages" not in os.listdir(path):
-        err("No \"messages\" directory found in file")
-
-    path = os.path.join(path, "messages/")
-
+def get_dms(path):
     try:
         with open(os.path.join(path, "index.json"), encoding="utf-8") as f:
             names = json.load(f)
@@ -75,12 +69,16 @@ def read(path, args):
                     name = names[i[1:]]
                     startstr = "Direct Message with "
                     dms[i] = name[len(startstr):] if name.startswith(startstr) else name
-
+    return dms
+def read(path, args):
+    path = os.path.join(path, "messages/")
+    print(args)
+    dms = get_dms(path)
     print("Reading DMs")
     # for each dm read and plot
     leaders = {}
     for k, v in dms.items():
-        msg_total = []
+        msg_total = [1]
         timestamp = []
         hmms = []
         with open(os.path.join(path, k, "messages.csv"), encoding="utf-8") as f:
@@ -93,22 +91,23 @@ def read(path, args):
             for line in msgs:
                 date = line[1]
                 timestamp.append(datetime.datetime.fromisoformat(date))
-                if len(msg_total) == 0:
-                    msg_total.append(1)
-                else:
-                    msg_total.append(msg_total[-1] + 1)
+                msg_total.append(msg_total[-1] + 1)
 
                 content = line[2]
                 find_mmms(content, hmms_dict)
                 hmms.append(hmms_dict.copy())
-
+            
+            msg_total = msg_total[1:]
             if len(msg_total) != 0:
                 leaders[v] = [timestamp, msg_total, hmms]
-
     if args.list:
+        total_total = 0
         for name, v in leaders.items():
             total_messages = v[1][-1]
+            total_total += total_messages
             print(f"{name:<40} {total_messages:>10}")
+        name = "Total"
+        print(f"{name:<40} {total_total:>10}")
         return
 
     max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
@@ -131,7 +130,6 @@ def read(path, args):
 
     leaders = sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True)
 
-    #print(leaders)
     if args.user:
         selected_users = list(filter(lambda item: args.user in item[0].lower(), leaders))
         if selected_users:
@@ -143,7 +141,7 @@ def read(path, args):
     if start_after > len(leaders):
         print(f"Can't start after {start_after} users, you only have {len(leaders)}, starting at 0", file=sys.stderr)
         start_after = 0
-    leaders_to_display = leaders[start_after:start_after + args.numlines]
+    leaders_to_display = leaders[start_after:(start_after + args.numlines)]
 
     names = [user[0] for user in leaders_to_display]
     print(f"Showing data for user(s): {', '.join(names)}")
@@ -157,6 +155,8 @@ def read(path, args):
         else:
             plt.plot(data[0], data[1], "-", label=name)
 
+
+    # Graph stuff
     print("Plotting")
     plt.legend(loc="upper left")
     #plt.title("Top %d most messaged users over time" % args.numlines)
@@ -179,6 +179,7 @@ parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", typ
 parser.add_argument("-l", "--list" , dest="list", action="store_true", help="List all DMs and exit")
 parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, default=None, help="Show only the given `user`")
 parser.add_argument("--hmms" , dest="hmm", action="store_true", help="Show statistics for words like hmm, huh, or lol")
+parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, help="Graph words")
 args = parser.parse_args()
 
 path = args.path
@@ -190,4 +191,7 @@ zf = zipfile.ZipFile(path, "r")
 with tempfile.TemporaryDirectory() as tf:
     print("Extracting")
     zf.extractall(tf)
+    # ensure we have ma messages dir
+    if "messages" not in os.listdir(tf):
+        err("No \"messages\" directory found in file")
     read(tf, args)

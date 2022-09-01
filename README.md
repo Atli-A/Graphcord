@@ -13,13 +13,16 @@ Make sure you have python3 installed as well as matplotlib
 
 To run graphcord download it and run 
 ```sh
-./graphcord.py path/to/your/data/package.zip
+python3 graphcord.py path/to/your/data/package.zip
+```
+On Windows use the following:
+```sh
+python graphcord.py path/to/your/data/package.zip
 ```
 To specify the top *n* users use the -n flag. For example, this shows the first 15 
 ```sh
-./graphcord.py path/to/your/data/package.zip -n 15
+python3 graphcord.py path/to/your/data/package.zip -n 15
 ```
-
 
 ## Example
 ![Example Graph](./screenshots/example1.png)
