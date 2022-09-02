@@ -206,13 +206,21 @@ def any_in(lst1, lst2):
     return False
 
 parser = argparse.ArgumentParser(description="Graph discord messages over time")
-parser.add_argument("path", metavar="FILE", type=str, nargs=None, help="The top n users to graph")
-parser.add_argument("-n", dest="numlines", metavar="numlines", type=uint, default=10, help="The top n users to graph")
-parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", type=uint, default=0, help="Skip the first `start` top users")
-parser.add_argument("-l", "--list" , dest="list", action="store_true", help="List all DMs and exit")
-parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, nargs="+", default=None, help="Show only the given `user`")
-parser.add_argument("--hmms" , dest="hmms", action="store_true", help="Show statistics for words like hmm, huh, or lol")
-parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, help="Graph words")
+parser.add_argument("path", metavar="FILE", type=str, nargs=None, 
+    help="The path to your data package in its .zip format")
+parser.add_argument("-n", dest="numlines", metavar="numlines", type=uint, default=10, 
+    help="The top n users to graph")
+parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", type=uint, default=0, 
+    help="Skip the first n top users")
+parser.add_argument("-l", "--list" , dest="list", action="store_true", 
+    help="List all DMs to stdout and exit")
+parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, nargs="+", default=None, 
+    help="Show only the given users data. Works with --hmms and ---words")
+parser.add_argument("--hmms" , dest="hmms", action="store_true", 
+        
+    help="Show statistics for words like hmm, huh, or lol")
+parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, 
+    help="Show statistics for words of your choice. Supports regex (buggy)")
 
 args = parser.parse_args()
 if args.hmms and args.words:
