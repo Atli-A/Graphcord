@@ -71,10 +71,25 @@ def get_dms(path):
                     dms[i] = name[len(startstr):] if name.startswith(startstr) else name
     return dms
 
+def word_clean(word):
+    bad_words = ["\\s", "\\d"]
+    for i in bad_words:
+        word = word.replace(i, "_")
+
+    bad_letters = "*()?\"\\"
+    for i in bad_letters:
+        word = word.replace(i, "_")
+
+    word = "PHRASE_%s" % word
+    print(word)
+    return word
+
+
 def compile_words(words):
     buf = ""
     for i in words:
-        buf += "(?P<%s>%s)|" % (i, i)
+        print(i)
+        buf += "(?P<%s>%s)|" % (word_clean(i), i)
     buf = buf[:-1] 
     print(buf)
     return re.compile(buf, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
