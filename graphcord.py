@@ -177,7 +177,7 @@ def read(path, args):
         if args.hmms or args.words != None:
             if len(users_to_display) > 1:
                 err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
-            for name, values in data[2]:
+            for name, values in sorted(data[2], key=lambda i: i[1][-1], reverse=True):
                 plt.plot(data[0], values, "-", label=name)
         else:
             plt.plot(data[0], data[1], "-", label=name)
