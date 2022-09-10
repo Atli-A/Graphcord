@@ -32,6 +32,10 @@ r"""
 )$
 """, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
 
+def err(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
+    sys.exit(1)
+
 def find_hmms(pattern, string, hmms_dict):
     results = pattern.finditer(string)
     for found in results:
@@ -46,30 +50,6 @@ def find_hmms(pattern, string, hmms_dict):
         if hmm_found not in hmms_dict:
             hmms_dict[hmm_found] = 0
         hmms_dict[hmm_found] += 1
-
-def err(*args, **kwargs):
-    print(*args, file=sys.stderr, **kwargs)
-    sys.exit(1)
-
-def get_dms(path):
-    try:
-        with open(os.path.join(path, "index.json"), encoding="utf-8") as f:
-            names = json.load(f)
-    except Exception:
-        err("Could not find %s" % os.path.join(path, "index.json"))
-
-    # generate list of dms
-    #     channel id : name
-    print("Collecting Names")
-    dms = {}
-    for i in os.listdir(path):
-        if os.path.isdir(os.path.join(path, i)):
-            with open(os.path.join(path, i, "channel.json"), encoding="utf-8") as file:
-                if json.load(file)["type"] == 1:
-                    name = names[i[1:]]
-                    startstr = "Direct Message with "
-                    dms[i] = name[len(startstr):] if name.startswith(startstr) else name
-    return dms
 
 def word_clean(word):
     bad_words = ["\\s", "\\d"]
@@ -93,6 +73,27 @@ def compile_words(words):
     buf = buf[:-1] 
     print(buf)
     return re.compile(buf, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
+
+def get_dms(path):
+    try:
+        with open(os.path.join(path, "index.json"), encoding="utf-8") as f:
+            names = json.load(f)
+    except Exception:
+        err("Could not find %s" % os.path.join(path, "index.json"))
+
+    # generate list of dms
+    #     channel id : name
+    print("Collecting Names")
+    dms = {}
+    for i in os.listdir(path):
+        if os.path.isdir(os.path.join(path, i)):
+            with open(os.path.join(path, i, "channel.json"), encoding="utf-8") as file:
+                if json.load(file)["type"] == 1:
+                    name = names[i[1:]]
+                    startstr = "Direct Message with "
+                    dms[i] = name[len(startstr):] if name.startswith(startstr) else name
+    return dms
+
 
 def read(path, args):
     path = os.path.join(path, "messages/")
