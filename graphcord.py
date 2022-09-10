@@ -4,6 +4,7 @@ import sys
 import datetime
 import re
 import os
+import time
 import json
 import csv
 import tempfile
@@ -99,33 +100,42 @@ def read(path, args):
     path = os.path.join(path, "messages/")
     print("Finding DMs")
     dms = get_dms(path)
+    if args.users: # if we are selecting by users find them
+        args.users = [i.lower() for i in args.users] # to make it not case sensetive
+        selected = dict(filter(lambda u: any_in(args.users, u[1].lower()), dms.items()))
+        if selected:
+            dms = selected
+        else:
+            print(f"Can't find a user named {args.users}, showing all", file=sys.stderr)
+  
+
+    
+    # Read contents of DMs 
     print("Reading DMs")
-    # for each dm read and plot
     leaders = {}
     pattern = hmms_pattern if args.words is None else compile_words(args.words)
-        
+
     for directory, username in dms.items():
-        msg_total = [1]
-        timestamp = []
-        hmms = []
         with open(os.path.join(path, directory, "messages.csv"), encoding="utf-8") as f:
+            timestamp = []
+            hmms = []
             msgs = csv.reader(f)
             next(msgs) # skip the header
             msgs = reversed(list(msgs))
             hmms_dict = {}
 
             for line in msgs:
-                date = line[1]
-                timestamp.append(datetime.datetime.fromisoformat(date))
-                msg_total.append(msg_total[-1] + 1)
-
+                timestamp.append(datetime.datetime.fromisoformat(line[1]))
                 msg_content = line[2]
                 find_hmms(pattern, msg_content, hmms_dict)
                 hmms.append(hmms_dict.copy())
-            msg_total = msg_total[1:]
             
+            msg_total = [i for i in range(len(timestamp))]
             if len(msg_total) != 0:
                 leaders[username] = [timestamp, msg_total, hmms]
+    
+    # sort leaders
+    leaders = dict(sorted(leaders.items(), key=lambda i: i[1][1]))
 
     if args.list:
         total_total = 0
@@ -137,12 +147,16 @@ def read(path, args):
         print(f"{name:<40} {total_total:>10}")
         return
 
-    max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
+    # use -n and -s args to determine how many users to show assumes the leaders have been sorted
+    leaders = {k: leaders[k] for k in list(reversed(list(leaders)))[args.startafter:args.numlines]}
 
+    # find the maximum timestamp and add it to all of the lists to make lines reach the end
+    max_timestamp = max([max(v[0]) for _, v in leaders.items() if len(v[0]) != 0])
     for k, v in leaders.items():
         v[0].append(max_timestamp)
         v[1].append(v[1][-1])
-
+    
+    # TODO clean up
     # transpose hmms into lists of counts
     for k, v in leaders.items():
         transposed_hmms = []
@@ -155,29 +169,20 @@ def read(path, args):
 
         leaders[k][2] = transposed_hmms
 
-    leaders = sorted(leaders.items(), key=lambda i: len(i[1][0]), reverse=True)
+    startafter = args.startafter
+    if startafter > len(leaders):
+        print(f"Can't start after {startafter} users, you only have {len(leaders)}, starting at 0", file=sys.stderr)
+        startafter = 0
 
-    if args.user:
-        selected_users = list(filter(lambda item: any_in([i.lower() for i in args.user], item[0].lower()), leaders))
-        if selected_users:
-            leaders = selected_users
-        else:
-            print(f"Can't find a user named {args.user}, showing all", file=sys.stderr)
+    leaders = dict(sorted(leaders.items(), key=lambda i: i[1][1], reverse=True))
 
-    start_after = args.startafter
-    if start_after > len(leaders):
-        print(f"Can't start after {start_after} users, you only have {len(leaders)}, starting at 0", file=sys.stderr)
-        start_after = 0
-
-    users_to_display = leaders[start_after:(start_after + args.numlines)]
-
-    names = [user[0] for user in users_to_display]
+    names = [user for user in leaders.keys()]
     print(f"Showing data for user(s): {', '.join(names)}")
 
-    for name, data in users_to_display:
+    if len(leaders.items()) > 1:
+        err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
+    for name, data in leaders.items():
         if args.hmms or args.words != None:
-            if len(users_to_display) > 1:
-                err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
             for name, values in sorted(data[2], key=lambda i: i[1][-1], reverse=True):
                 plt.plot(data[0], values, "-", label=name)
         else:
@@ -215,10 +220,9 @@ parser.add_argument("-s", "--skip", dest="startafter", metavar="startafter", typ
     help="Skip the first n top users")
 parser.add_argument("-l", "--list" , dest="list", action="store_true", 
     help="List all DMs to stdout and exit")
-parser.add_argument("-u", "--user" , dest="user", metavar="user", type=str, nargs="+", default=None, 
+parser.add_argument("-u", "--user" , dest="users", metavar="users", type=str, nargs="+", default=None, 
     help="Show only the given users data. Works with --hmms and ---words")
 parser.add_argument("--hmms" , dest="hmms", action="store_true", 
-        
     help="Show statistics for words like hmm, huh, or lol")
 parser.add_argument("-w", "--words", nargs="+", dest="words", default=None, 
     help="Show statistics for words of your choice. Supports regex (buggy)")
