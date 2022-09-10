@@ -52,25 +52,18 @@ def find_hmms(pattern, string, hmms_dict):
             hmms_dict[hmm_found] = 0
         hmms_dict[hmm_found] += 1
 
-def word_clean(word):
-    bad_words = ["\\s", "\\d"]
-    for i in bad_words:
-        word = word.replace(i, "_")
+def clean(string):
+    return "i_" + "".join([i if i.isalnum() else "_" for i in string])
 
-    bad_letters = "*()?\"\\"
-    for i in bad_letters:
-        word = word.replace(i, "_")
-
-    word = "PHRASE_%s" % word
-    print(word)
-    return word
+def word_clean(word, prefix):
+    return "%s_%s" % (clean(prefix.upper()), clean(word))
 
 
-def compile_words(words):
+def compile_words(words, prefix):
     buf = ""
     for i in words:
         print(i)
-        buf += "(?P<%s>%s)|" % (word_clean(i), i)
+        buf += "(?P<%s>%s)|" % (word_clean(i, prefix), i)
     buf = buf[:-1] 
     print(buf)
     return re.compile(buf, re.IGNORECASE | re.MULTILINE | re.VERBOSE)
@@ -113,7 +106,6 @@ def read(path, args):
     # Read contents of DMs 
     print("Reading DMs")
     leaders = {}
-    pattern = hmms_pattern if args.words is None else compile_words(args.words)
 
     for directory, username in dms.items():
         with open(os.path.join(path, directory, "messages.csv"), encoding="utf-8") as f:
@@ -122,6 +114,7 @@ def read(path, args):
             msgs = csv.reader(f)
             next(msgs) # skip the header
             msgs = reversed(list(msgs))
+            pattern = hmms_pattern if args.words is None else compile_words(args.words, username.split('#')[0])
             hmms_dict = {}
 
             for line in msgs:
@@ -179,11 +172,12 @@ def read(path, args):
     names = [user for user in leaders.keys()]
     print(f"Showing data for user(s): {', '.join(names)}")
 
-    if len(leaders.items()) > 1:
-        err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
     for name, data in leaders.items():
         if args.hmms or args.words != None:
+#            if len(leaders.items()) > 1:
+#                err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
             for name, values in sorted(data[2], key=lambda i: i[1][-1], reverse=True):
+                print(name)
                 plt.plot(data[0], values, "-", label=name)
         else:
             plt.plot(data[0], data[1], "-", label=name)
