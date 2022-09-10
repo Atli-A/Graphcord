@@ -53,10 +53,10 @@ def find_hmms(pattern, string, hmms_dict):
         hmms_dict[hmm_found] += 1
 
 def clean(string):
-    return "i_" + "".join([i if i.isalnum() else "_" for i in string])
+    return "".join([i if i.isalnum() else "_" for i in string])
 
 def word_clean(word, prefix):
-    return "%s_%s" % (clean(prefix.upper()), clean(word))
+    return "i_%s_%s" % (clean(prefix.upper()), clean(word))
 
 
 def compile_words(words, prefix):
@@ -172,12 +172,14 @@ def read(path, args):
     names = [user for user in leaders.keys()]
     print(f"Showing data for user(s): {', '.join(names)}")
 
+    if args.hmms or args.words != None:
+        print("AHHHHHHHHH")
+        leaders = dict(sorted(leaders.items(), key=lambda i: hack(i), reverse=True))
     for name, data in leaders.items():
         if args.hmms or args.words != None:
 #            if len(leaders.items()) > 1:
 #                err("Can't show hmms for more than one user, please make your constraints more specific,\nRun with --list to see all users")
             for name, values in sorted(data[2], key=lambda i: i[1][-1], reverse=True):
-                print(name)
                 plt.plot(data[0], values, "-", label=name)
         else:
             plt.plot(data[0], data[1], "-", label=name)
@@ -192,6 +194,14 @@ def read(path, args):
     plt.xticks(rotation=75)
     plt.tight_layout()
     plt.show()
+
+
+def hack(i):
+    try: 
+        x = i[1][2][-1][-1][-1]
+        return x
+    except Exception: 
+        return 0
 
 def uint(value):
     ivalue = int(value)
